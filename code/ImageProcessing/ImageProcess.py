@@ -39,9 +39,6 @@ class ImageProcess():
         self.colorpoint = dict()
         self.outpoints = []
         self.lines = []
-        self.alpha = int()
-        self.beta = int()
-        self.gama = int()
         self.flag = None
         self.midmark = []
 
@@ -127,8 +124,8 @@ class ImageProcess():
             print(len(self.allpoint))
         if output:
             cv2.imwrite(ResultImgPath+'getxy'+str(self.alpha)+'_'+str(self.beta)+'_'+str(self.gama)+'.bmp',blackimg)
+        return blackimg
 
-    ######改到这里
     def getcolor(self, output=False, screen=False):
         blackimg = cv2.imread(BlackImgPath, 0)
         blur = cv2.GaussianBlur(self.img1, (31, 31), 0)
@@ -144,35 +141,46 @@ class ImageProcess():
             color1 = {'b': int(color[0]), 'g': int(color[1]), 'r': int(color[2])}
             '''if (color1['b'] > 75) + (color1['g'] > 75) + (color1['r'] > 75) + \
                     (color2[0] > 40 or color2[1] > 40 or color2[2] > 40) >= 3:'''
+            # shining point
             if (color1['b'] > 75) + (color1['g'] > 75) + (color1['r'] > 75) >= 2:
+                # blue
                 if color1['b'] > color1['g'] + 30 and color1['b'] > color1['r'] + 30 \
                         and color1['g'] - color1['r'] > 10:
                     blue.append([c, 'blue'])
                     cv2.circle(blackimg, (c[0], c[1]), 3, (255, 100, 100), -1)
+                # purple
                 elif color1['b'] > color1['g'] + 30 and color1['r'] - color1['g'] > 10:
                     purple.append([c, 'purple'])
                     cv2.circle(blackimg, (c[0], c[1]), 3, (255, 100, 255), -1)
+                # white
                 elif color1['b'] - color1['g'] > 15 and color1['b'] - color1['r'] > 15:
                     white.append([c, 'white'])
                     cv2.circle(blackimg, (c[0], c[1]), 3, (255, 255, 255), -1)
+                # red
                 elif color1['r'] - color1['b'] > 30 and color1['r'] - color1['g'] > 25:
                     red.append([c, 'red'])
                     cv2.circle(blackimg, (c[0], c[1]), 3, (100, 100, 255), -1)
+                # yellow
                 elif color1['r'] - color1['b'] > 25:
                     yellow.append([c, 'yellow'])
                     cv2.circle(blackimg, (c[0], c[1]), 3, (100, 255, 255), -1)
+                # green
                 elif color1['g'] - color1['r'] > 25 and color1['b'] - color1['r'] > 25:
                     green.append([c, 'green'])
                     cv2.circle(blackimg, (c[0], c[1]), 3, (100, 255, 100), -1)
-        '''cv2.imshow('sample', blackimg)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()'''
         self.colorpoint['blue'] = blue
         self.colorpoint['purple'] = purple
         self.colorpoint['white'] = white
         self.colorpoint['red'] = red
         self.colorpoint['yellow'] = yellow
         self.colorpoint['green'] = green
+        if screen:
+            cv2.imshow('sample', blackimg)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+        if output:
+            cv2.imwrite(ResultImgPath+'getcolor'+str(self.alpha)+'_'+str(self.beta)+'_'+str(self.gama)+'.bmp', blackimg)
+        return blackimg
 
     def getlines(self):
         self.outpoints = []
@@ -200,7 +208,7 @@ class ImageProcess():
                     cv2.waitKey(0)
                     cv2.destroyAllWindows()'''
                     pointcolor = []
-                    blackimg = cv2.imread('black1.bmp', 0)
+                    # blackimg = cv2.imread('black1.bmp', 0)
                     for p in self.allpoint:
                         if self.getdist(p, theta, rho) < 25:
                             p.append(key)
@@ -226,7 +234,6 @@ class ImageProcess():
 
     def getrows(self):
         if self.flag == 'middle':
-            # gandianbiede
             p1 = [int(self.mark[0][2]), int(self.mark[0][3])]
             p2 = [int(self.mark[1][2]), int(self.mark[1][3])]
             aa = p1[1]-p2[1]
@@ -324,7 +331,7 @@ class ImageProcess():
             for i, line in enumerate(self.outpoints):
                 index = self.midmark[i]
                 if abs(line[index][0] - pointm0[2]) < 15 and abs(line[index][1] - pointm0[3]) < 15:
-                    mark = [index, i]
+                    mark = [index, i]   # TODO:Ask penguin
                     #cv2.circle(self.img1, (line[index][0], line[index][1]), 10, (255, 255, 255), 2)
                 elif abs(line[index][0] - pointm1[2]) < 15 and abs(line[index][1] - pointm1[3]) < 15:
                     mark1 = [index, i]
@@ -395,6 +402,7 @@ class ImageProcess():
         self.outpoints = points
         #print(self.outpoints[0])
         #print(self.outpoints[-1])
+        return img2
 
     def findlines(self, lines):
         lineout = []
@@ -413,6 +421,7 @@ class ImageProcess():
                 self.lines.append(linea)
                 lineout.append(linea)
         return lineout
+
     def getdist(self, point, theta, rho):
         a = np.cos(theta)
         b = np.sin(theta)
@@ -423,8 +432,10 @@ class ImageProcess():
         else:
             y = float((point[0] - x0) * (-a / b) + y0)
             return abs((y - point[1]) * b)
+
     def getdist2(self, point, a, b, c):
         return abs(a*point[0]+b*point[1]+c)/(a**2+b**2)**0.5
+
     def findclose(self, dist):
         aa = dist[0]
         for l in dist:
@@ -433,11 +444,6 @@ class ImageProcess():
         return aa[0]
 
     def SeeSee(self):
-        """
-        输入图片名称 显示检查标注点 会打开一张图片
-        :param figname:图片名称
-        :return:无
-        """
         fig = self.img1
         xsize = fig.shape[1]
         ysize = fig.shape[0]
@@ -448,7 +454,7 @@ class ImageProcess():
         if len(points):
             for point in points:
                 p = self.change(int(point[2]), int(point[3]),xsize,ysize)
-                cv2.circle(fig, (p[0],p[1]), 15, (0, 0, 255), 2)
+                cv2.circle(fig, (p[0], p[1]), 15, (0, 0, 255), 2)
                 p = self.change(int(point[2]), int(point[3])-10,xsize,ysize)
                 cv2.putText(fig, str(int(point[0]))+','+str(int(point[1])),
                            (p[0],p[1]), font, 1,(255, 255, 255), 1)
@@ -460,3 +466,4 @@ class ImageProcess():
         cv2.imshow('see_image', fig)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
+        return fig
