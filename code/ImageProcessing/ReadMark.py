@@ -1,11 +1,14 @@
 import cv2 as cv
+from Exception import MyException
 MarkFilePath = '../../data/total/mark total.txt'
 FigFolderName = '../../figures/'
-from Exception import MyException
 
 
 class ReadMarkError(MyException):
-    super(ReadMarkError, self).__init__(code=1002, message='Number of mark points does not match the record', args=('ReadMarkError',))
+    def __init__(self):
+        super(ReadMarkError, self).__init__(code=1002,
+                                      message='Number of mark points does not match the record',
+                                      args=('ReadMarkError',))
 
 
 def readmark(filename):
