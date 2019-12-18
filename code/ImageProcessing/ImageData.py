@@ -15,10 +15,6 @@ from sklearn.preprocessing import Imputer
 from ImageProcess import MyException
 
 
-class MarkError(MyException):
-    super().__init__(code=1001, message='MarkError', args=('MarkError',))
-
-
 def func_timer(function):
     '''
     用装饰器实现函数计时
@@ -31,7 +27,7 @@ def func_timer(function):
         t0 = time.time()
         result = function(*args, **kwargs)
         t1 = time.time()
-        print('[Function: {name} finished, spent time: {time:.2f}s]'.format(name = function.__name__,time = t1 - t0))
+        print('[Function: {name} finished, spent time: {time:.2f}s]'.format(name=function.__name__, time=t1 - t0))
         return result
     return function_timer
 

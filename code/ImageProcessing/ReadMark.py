@@ -6,9 +6,19 @@ FigFolderName = '../../figures/'
 
 class ReadMarkError(MyException):
     def __init__(self):
-        super(ReadMarkError, self).__init__(code=1002,
+        super(ReadMarkError, self).__init__(code=1001,
                                       message='Number of mark points does not match the record',
                                       args=('ReadMarkError',))
+
+
+def readname(filename):
+    head, alpha, beta, tail = filename.split('_')
+    gama, end = tail.split('.')
+    # 转整数
+    alpha = int(alpha)
+    beta = int(beta)
+    gama = int(gama)
+    return alpha, beta, gama
 
 
 def readmark(filename):
@@ -18,12 +28,7 @@ def readmark(filename):
     数组的长度表示标注点的数量 每个标注点包含四个参数 X Y x y 大写为真实坐标 小写为图像坐标
     xy为小数是因为标注时图片太大经过缩放 产生了小数坐标标注 参考小数坐标寻找最临近亮点即可
     """
-    head, alpha, beta, tail = filename.split('_')
-    gama, end = tail.split('.')
-    # 转整数
-    alpha = int(alpha)
-    beta = int(beta)
-    gama = int(gama)
+    alpha, beta, gama = readname(filename)
     with open(MarkFilePath, 'r', encoding='UTF-8') as f:
         result = []
         length = 0
