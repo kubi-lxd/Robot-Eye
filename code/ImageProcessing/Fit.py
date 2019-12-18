@@ -12,7 +12,7 @@ import time
 from functools import wraps
 import shutil
 from sklearn.preprocessing import Imputer
-from ImageData import ImageDataProcess
+from ImageData import ImageDataProcess,func_timer
 
 class xgboostmodel(object):
     def __init__(self,FilePath):
