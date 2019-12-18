@@ -6,8 +6,8 @@ from Exception import MyException
 
 MarkFilePath = '../../data/total/mark total.txt'
 BaseImgPath = '../../examples/black1.bmp'
-OriginalImgPath = '../../figures/'
-ResultImgPath = '../../examples/'
+OriginalImgPath = '../../examples/'
+ResultImgPath = '../../examples/result/'
 
 
 class GetTypeError(MyException):
@@ -341,7 +341,7 @@ class ImageProcess:
                         cv2.putText(baseimg, str(pm[1]), (pm[2] - 20, pm[3] - 20),
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (180, 180, 180), 2)
                         linem.append(pm)
-                if linem != []:
+                if linem:
                     points.append(linem)
         for line in points:
             for p in line:
@@ -402,6 +402,5 @@ class ImageProcess:
 
 
 if __name__ == '__main__':
-    OriginalImgPath = '../../examples/'
     Data = ImageProcess('image_253_3_53.bmp', True, False)
     print(Data.outpoints)

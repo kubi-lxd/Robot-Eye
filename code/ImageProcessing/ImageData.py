@@ -1,26 +1,28 @@
-import cv2
-import os
-import numpy as np
-import tensorflow as tf
-from scipy import *
-from scipy.linalg import norm, pinv
-import pandas as pd
-import matplotlib.pyplot as plt
-import xgboost as xgb
-from xgboost import plot_importance
+import shutil
 import time
 from functools import wraps
-import shutil
-from sklearn.preprocessing import Imputer
-from ImageProcess import MyException
+
+import cv2
+import numpy as np
+import os
+from scipy import *
+from ImageProcess import ImageProcess
+from Exception import MyException
+OriginalImgPath = '../../examples/'
+BadImgPath = '../../examples/bad files/'
+
+
+class HError(MyException):
+    def __init__(self):
+        super(HError, self).__init__(code=1003, message='not enough points to calculate H matrix', args=('HError,',))
 
 
 def func_timer(function):
-    '''
+    """
     用装饰器实现函数计时
     :param function: 需要计时的函数
     :return: None
-    '''
+    """
     @wraps(function)
     def function_timer(*args, **kwargs):
         print('[Function: {name} start...]'.format(name=function.__name__))
@@ -33,32 +35,37 @@ def func_timer(function):
 
 
 class ImageDataProcess(object):
-    def calculateH(self, ImgName):
-        head, alpha, beta, gamaend = ImgName.split('_')
-        fig = cv2.imread(ImgName)
-        # cv2.imshow('original fig', fig)
-        # 原图中的4个点
-        src_point = np.float32([[50, 100], [150, 100], [50, 200], [150, 200]])
-        dst_point = np.float32([[0, 0], [1000, 0], [0, 1000], [1000, 1000]])
-        # 至少要4个点，一一对应，找到映射矩阵h
-        h, s = cv2.findHomography(src_point, dst_point, cv2.RANSAC, 10)
-        # test
-        '''
-        h = np.mat(h)
-        o = np.mat([[150], [200], [1]])
-        res = h * o
-        res = np.asarray(res)
-        res = res.astype(np.int32)'''
-        return h
-
     @classmethod
-    def imgtoarray(cls, ImgName):
-        data = ImageDataProcess(ImgName)
-        ArrayResult = []
+    def imgtoarray(cls, imgname):
+        data = ImageProcess(imgname)
+        arrayresult = []
         for ColorsList in data.outpoints:
             for Point in ColorsList:
-                ArrayResult.append(Point)
-        return ArrayResult
+                arrayresult.append(Point)
+        return arrayresult
+
+    @classmethod
+    def calculateHmatrix(cls, imgname):
+        arrayresult = cls.imgtoarray(imgname)
+        src_point = []
+        dst_point = []
+        for point in arrayresult:
+            realworldpos = [point[0], point[1]]
+            pixelworldpos = [point[2], point[3]]
+            src_point.append(realworldpos)
+            dst_point.append(pixelworldpos)
+        if len(src_point) <= 3 or len(src_point) != len(dst_point):
+            raise HError
+        h, s = cv2.findHomography(np.float32(src_point), np.float32(dst_point), cv2.RANSAC, 10)
+        h = np.mat(h)
+        '''
+                h = np.mat(h)
+                o = np.mat([[150], [200], [1]])
+                res = h * o
+                res = np.asarray(res)
+                res = res.astype(np.int32)
+                '''
+        return h
 
     @classmethod
     def datatrans(cls, Type, *args):
@@ -93,40 +100,40 @@ class ImageDataProcess(object):
 
     @classmethod
     @func_timer
-    def solveallfigures(cls, PathName):
-        TotalResult = []
-        with open(PathName + '/'+'data.txt','w') as DataFile:
-            with open(PathName + '/'+'error.txt','w') as ErrorFile:  ## !!!
-                for filename in os.listdir(PathName):
+    def solveallfigures(cls, filepath):
+        totalresult = []
+        with open(filepath + '/'+'data.txt', 'w') as DataFile:
+            with open(filepath + '/'+'error.txt', 'w') as ErrorFile:
+                for filename in os.listdir(filepath):
                     if filename[-3:] == 'bmp':
                         print('reading:'+filename+'...')
-                        ImgName = PathName + '/'+filename
+                        imgname = filepath + '/'+filename
                         try:
-                            Array = cls.ImgToArray(ImgName)
+                            Array = cls.ImgToArray(imgname)
                             for data in Array:
                                 data_out = str(data).strip('[').strip(']').replace(',', '\t')+'\n'
-                                if len(data_out.split('\t'))==7:
+                                if len(data_out.split('\t')) == 7:
                                     DataFile.write(data_out)
                                 else:
                                     print('errorfile:  ' + filename + ' ' + str(data))
                                     ErrorFile.write(filename + '  ' + str('DataError') + '\n')
                                     break
-                            TotalResult.extend(Array)
-                        except Exception as e:
-                            print('error:'+filename,e)
+                            totalresult.extend(Array)
+                        except Exception as error:
+                            print('error:'+filename, error)
                             ErrorFile.write(filename+'  '+str(e)+'\n')
-        return TotalResult
+        return totalresult
 
     @classmethod
-    def finderrorfiles(cls,PathName,NewPath):  # cp bad files to one folder
-        with open(PathName + '/' + 'error.txt', 'r', encoding='UTF-8') as ErrorFile:
+    def finderrorfiles(cls, filepath, newpath):  # copy bad files to one folder
+        with open(filepath + '/' + 'error.txt', 'r', encoding='UTF-8') as ErrorFile:
             for i, line in enumerate(ErrorFile):
-                ImgName, ErrorName=line.strip('  ').strip('\n').split('.bmp')
-                shutil.copyfile(PathName+'/'+ImgName+'.bmp', NewPath+'/'+ImgName+'.bmp')  # 复制
+                imgname, errorname=line.strip('  ').strip('\n').split('.bmp')
+                shutil.copyfile(filepath+'/'+imgname+'.bmp', newpath+'/'+imgname+'.bmp')
 
     @classmethod
-    def Circlefigure(cls,ImgName,modelclass):
-        head, alpha, beta, gamaend = ImgName.split('_')
+    def Circlefigure(cls, imgname, modelclass):
+        head, alpha, beta, gamaend = imgname.split('_')
         gama, end = gamaend.split('.')
         # 转整数
         alpha = int(alpha)
@@ -141,23 +148,33 @@ class ImageDataProcess(object):
         for a in angle:
             x1 = x0 + r * cos(a * pi / 180)
             y1 = y0 + r * sin(a * pi / 180)
-            CirclePointList.append([x1,y1,alpha,beta,gama])
+            CirclePointList.append([x1, y1, alpha, beta, gama])
         FigPointList = modelclass.Predict(float64(CirclePointList))
         RealFigPoints = []
         for FigPoint in FigPointList:
             FigPoint[0] = round(FigPoint[0])
             FigPoint[1] = round(FigPoint[1])
-            if FigPoint[0]<=0 or FigPoint[0]>=1920: continue
-            if FigPoint[1]<=0 or FigPoint[0]>=1080: continue
-            RealFigPoints.append([FigPoint[0],FigPoint[1]])
+            if FigPoint[0] <= 0 or FigPoint[0] >= 1920:
+                continue
+            if FigPoint[1] <= 0 or FigPoint[0] >= 1080:
+                continue
+            RealFigPoints.append([FigPoint[0], FigPoint[1]])
 
         # 画近似曲线
-        img = cv2.imread(ImgName)
+        img = cv2.imread(imgname)
         for p in RealFigPoints:
             cv2.circle(img, (p[0], p[1]), 15, (0, 0, 255), 2)
+
         '''
         cv2.imshow('curve',img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
         '''
         return img
+
+if __name__ == '__main__':
+    print(ImageDataProcess.imgtoarray('image_253_3_53.bmp'))
+    print(ImageDataProcess.calculateHmatrix('image_253_3_53.bmp'))
+    print(ImageDataProcess.solveallfigures(OriginalImgPath))
+    print(ImageDataProcess.finderrorfiles(OriginalImgPath,BadImgPath))
+    # Circlefigure()

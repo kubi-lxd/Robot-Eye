@@ -1,5 +1,6 @@
 import cv2 as cv
 from Exception import MyException
+
 MarkFilePath = '../../data/total/mark total.txt'
 FigFolderName = '../../figures/'
 
@@ -7,8 +8,8 @@ FigFolderName = '../../figures/'
 class ReadMarkError(MyException):
     def __init__(self):
         super(ReadMarkError, self).__init__(code=1001,
-                                      message='Number of mark points does not match the record',
-                                      args=('ReadMarkError',))
+                                            message='Number of mark points does not match the record',
+                                            args=('ReadMarkError',))
 
 
 def readname(filename):
@@ -69,7 +70,7 @@ def checkmark(figname):
     :param figname:图片名称
     :return:无
     """
-    figname = FigFolderName+figname
+    figname = FigFolderName + figname
     fig = cv.imread(figname)
     xsize = fig.shape[1]
     ysize = fig.shape[0]
@@ -80,14 +81,14 @@ def checkmark(figname):
     if len(points):
         for point in points:
             p = change(int(point[2]), int(point[3]), xsize, ysize)
-            cv.circle(fig, (p[0],p[1]), 15, (0, 0, 255), 2)
-            p = change(int(point[2]), int(point[3])-10, xsize, ysize)
-            cv.putText(fig, str(int(point[0]))+','+str(int(point[1])),
-                       (p[0],p[1]), font, 1, (255, 255, 255), 1)
+            cv.circle(fig, (p[0], p[1]), 15, (0, 0, 255), 2)
+            p = change(int(point[2]), int(point[3]) - 10, xsize, ysize)
+            cv.putText(fig, str(int(point[0])) + ',' + str(int(point[1])),
+                       (p[0], p[1]), font, 1, (255, 255, 255), 1)
     cv.namedWindow('checkmark', cv.WINDOW_AUTOSIZE)
     # 缩放 防止超出屏幕
-    size = fig.shape
-    fig = cv.resize(fig, (int(size[1] * 0.5), int(size[0] * 0.5)), cv.INTER_LINEAR)
+    figsize = fig.shape
+    fig = cv.resize(fig, (int(figsize[1] * 0.5), int(figsize[0] * 0.5)), cv.INTER_LINEAR)
     # 显示
     cv.imshow('see_image', fig)
     cv.waitKey(0)
