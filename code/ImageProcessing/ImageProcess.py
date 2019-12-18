@@ -12,16 +12,10 @@ import time
 from functools import wraps
 import shutil
 from sklearn.preprocessing import Imputer
-
+from Exception import MyException
 MarkFilePath = '../../data/total/mark total.txt'
 BlackImgPath = '../../examples/black1.bmp'
 ResultImgPath = '../../examples/'
-
-class MyException(Exception):
-    def __init__(self, code, message, args):
-        self.args = args
-        self.message = message
-        self.code = code
 
 
 class MarkError(MyException):

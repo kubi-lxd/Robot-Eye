@@ -14,8 +14,10 @@ import shutil
 from sklearn.preprocessing import Imputer
 from ImageProcess import MyException
 
+
 class MarkError(MyException):
     super().__init__(code=1001, message='MarkError', args=('MarkError',))
+
 
 def func_timer(function):
     '''
@@ -32,6 +34,7 @@ def func_timer(function):
         print('[Function: {name} finished, spent time: {time:.2f}s]'.format(name = function.__name__,time = t1 - t0))
         return result
     return function_timer
+
 
 class ImageDataProcess(object):
     def calculateH(self, ImgName):

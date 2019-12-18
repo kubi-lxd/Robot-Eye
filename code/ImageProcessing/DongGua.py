@@ -12,6 +12,8 @@ import time
 from functools import wraps
 import shutil
 from sklearn.preprocessing import Imputer
+
+
 class DongGua():
     def __init__(self, name):
         self.name = name
@@ -748,7 +750,6 @@ class xgboostmodel(object):
     def ModelReload(self):
         self.model = xgb.Booster(model_file=self.path+'/'+'model1.model')
         self.model2 = xgb.Booster(model_file=self.path+'/'+'model2.model')
-
 
 
 # 召唤企鹅
