@@ -10,7 +10,7 @@ from ImageProcess import ImageProcess
 from Exception import MyException
 OriginalImgPath = '../../figures/figures/'
 BadImgPath = '../../figures/figures/bad files/'
-
+# img = cv2.copyMakeBorder(img, 200, 200, 200, 200, cv2.BORDER_CONSTANT, 0)
 
 class HError(MyException):
     def __init__(self):
@@ -56,8 +56,11 @@ class ImageDataProcess(object):
             dst_point.append(pixelworldpos)
         if len(src_point) <= 3 or len(src_point) != len(dst_point):
             raise HError
+        print('src:')
+        print(src_point)
+        print('dst:')
+        print(dst_point)
         h, s = cv2.findHomography(np.float32(src_point), np.float32(dst_point), cv2.RANSAC, 10)
-        h = np.mat(h)
         '''
                 h = np.mat(h)
                 o = np.mat([[150], [200], [1]])
@@ -96,20 +99,20 @@ class ImageDataProcess(object):
                 A.append(point[4])
                 B.append(point[5])
                 G.append(point[6])
-            return cls.DataTrans('RBF',X,Y,A,B,G),xlist,ylist
+            return cls.datatrans('RBF',X,Y,A,B,G), xlist, ylist
 
     @classmethod
     @func_timer
     def solveallfigures(cls, filepath):
         totalresult = []
-        with open(filepath + '/'+'data.txt', 'w') as DataFile:
-            with open(filepath + '/'+'error.txt', 'w') as ErrorFile:
+        with open(filepath + 'data.txt', 'w') as DataFile:
+            with open(filepath + 'error.txt', 'w') as ErrorFile:
                 for filename in os.listdir(filepath):
                     if filename[-3:] == 'bmp':
                         print('reading:'+filename+'...')
                         imgname = filepath + '/'+filename
                         try:
-                            Array = cls.ImgToArray(imgname)
+                            Array = cls.imgtoarray(imgname)
                             for data in Array:
                                 data_out = str(data).strip('[').strip(']').replace(',', '\t')+'\n'
                                 if len(data_out.split('\t')) == 7:
@@ -126,10 +129,14 @@ class ImageDataProcess(object):
 
     @classmethod
     def finderrorfiles(cls, filepath, newpath):  # copy bad files to one folder
+        print('finderrorfiles')
+        fignum =0
         with open(filepath + '/' + 'error.txt', 'r', encoding='UTF-8') as ErrorFile:
             for i, line in enumerate(ErrorFile):
+                fignum += 1
                 imgname, errorname=line.strip('  ').strip('\n').split('.bmp')
                 shutil.copyfile(filepath+'/'+imgname+'.bmp', newpath+'/'+imgname+'.bmp')
+        print('find' + str(fignum) + 'files')
 
     @classmethod
     def Circlefigure(cls, imgname, modelclass):
@@ -176,8 +183,22 @@ class ImageDataProcess(object):
 if __name__ == '__main__':
     OriginalImgPath = '../../figures/examples/'
     BadImgPath = '../../figures/examples/bad files/'
-    print(ImageDataProcess.imgtoarray('image_253_3_53.bmp'))
-    print(ImageDataProcess.calculateHmatrix('image_253_3_53.bmp'))
-    print(ImageDataProcess.solveallfigures(OriginalImgPath))
-    print(ImageDataProcess.finderrorfiles(OriginalImgPath, BadImgPath))
+    Data = ImageDataProcess.imgtoarray('image_253_3_53.bmp')
+    print('ImgArray:')
+    print(Data)
+    H = ImageDataProcess.calculateHmatrix('image_253_3_53.bmp')
+    print('Hmatrix:')
+    print(H)
+    point = Data[4]
+    o = np.mat([[point[0]], [point[1]], [1]])
+    print('real coordinate:')
+    print([point[2], point[3]])
+    res = H * o
+    res = np.asarray(res)
+    res = res / res[2]
+    res = res.astype(np.int32)
+    print('Hpredict:')
+    print(res)
+    ImageDataProcess.solveallfigures(OriginalImgPath)
+    ImageDataProcess.finderrorfiles(OriginalImgPath, BadImgPath)
     # Circlefigure()
