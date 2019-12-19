@@ -1,8 +1,15 @@
-import cv2 as cv
+import cv2
 from Exception import MyException
+from enum import Enum
 
 MarkFilePath = '../../data/total/mark total.txt'
-FigFolderName = '../../figures/'
+FigFolderName = '../../figures/figures/'
+ResultImgPath = '../../figures/examples/result/'
+
+
+class OutputMode(Enum):
+    PrintScreen = 1
+    FileOutput = 2
 
 
 class ReadMarkError(MyException):
@@ -64,38 +71,43 @@ def change(x, y, xsize, ysize):
     return x, y
 
 
-def checkmark(figname):
+def checkmark(figname, mode=OutputMode.PrintScreen):
     """
     输入图片名称 显示检查标注点 会打开一张图片
+    :param mode:
     :param figname:图片名称
     :return:无
     """
     figname = FigFolderName + figname
-    fig = cv.imread(figname)
+    fig = cv2.imread(figname)
     xsize = fig.shape[1]
     ysize = fig.shape[0]
     # 拿到标注点信息
     points = readmark(figname)
-    font = cv.FONT_HERSHEY_SIMPLEX
+    font = cv2.FONT_HERSHEY_SIMPLEX
     # 标点 画圈 写字
     if len(points):
         for point in points:
             p = change(int(point[2]), int(point[3]), xsize, ysize)
-            cv.circle(fig, (p[0], p[1]), 15, (0, 0, 255), 2)
+            cv2.circle(fig, (p[0], p[1]), 15, (0, 0, 255), 2)
             p = change(int(point[2]), int(point[3]) - 10, xsize, ysize)
-            cv.putText(fig, str(int(point[0])) + ',' + str(int(point[1])),
+            cv2.putText(fig, str(int(point[0])) + ',' + str(int(point[1])),
                        (p[0], p[1]), font, 1, (255, 255, 255), 1)
-    cv.namedWindow('checkmark', cv.WINDOW_AUTOSIZE)
-    # 缩放 防止超出屏幕
-    figsize = fig.shape
-    fig = cv.resize(fig, (int(figsize[1] * 0.5), int(figsize[0] * 0.5)), cv.INTER_LINEAR)
     # 显示
-    cv.imshow('see_image', fig)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
+    if mode == OutputMode.PrintScreen:
+        cv2.namedWindow('checkmark', cv2.WINDOW_AUTOSIZE)
+        # 缩放 防止超出屏幕
+        figsize = fig.shape
+        fig = cv2.resize(fig, (int(figsize[1] * 0.5), int(figsize[0] * 0.5)), cv2.INTER_LINEAR)
+        cv2.imshow('see_image', fig)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+    elif mode == OutputMode.FileOutput:
+        print('saving markcheck figure')
+        cv2.imwrite(ResultImgPath+'markcheck.bmp', fig)
 
 
 if __name__ == '__main__':
-    FigFolderName = '../../examples/'
+    FigFolderName = '../../figures/examples/'
     print(readmark('image_203_203_253.bmp'))
-    checkmark('image_203_203_253.bmp')
+    checkmark('image_203_203_253.bmp', OutputMode.FileOutput)

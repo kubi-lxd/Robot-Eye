@@ -8,8 +8,8 @@ import os
 from scipy import *
 from ImageProcess import ImageProcess
 from Exception import MyException
-OriginalImgPath = '../../examples/'
-BadImgPath = '../../examples/bad files/'
+OriginalImgPath = '../../figures/figures/'
+BadImgPath = '../../figures/figures/bad files/'
 
 
 class HError(MyException):
@@ -172,9 +172,12 @@ class ImageDataProcess(object):
         '''
         return img
 
+
 if __name__ == '__main__':
+    OriginalImgPath = '../../figures/examples/'
+    BadImgPath = '../../figures/examples/bad files/'
     print(ImageDataProcess.imgtoarray('image_253_3_53.bmp'))
     print(ImageDataProcess.calculateHmatrix('image_253_3_53.bmp'))
     print(ImageDataProcess.solveallfigures(OriginalImgPath))
-    print(ImageDataProcess.finderrorfiles(OriginalImgPath,BadImgPath))
+    print(ImageDataProcess.finderrorfiles(OriginalImgPath, BadImgPath))
     # Circlefigure()

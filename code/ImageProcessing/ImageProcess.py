@@ -5,9 +5,9 @@ import ReadMark
 from Exception import MyException
 
 MarkFilePath = '../../data/total/mark total.txt'
-BaseImgPath = '../../examples/black1.bmp'
-OriginalImgPath = '../../examples/'
-ResultImgPath = '../../examples/result/'
+BaseImgPath = '../../figures/black1.bmp'
+OriginalImgPath = '../../figures/figures/'
+ResultImgPath = '../../figures/figures/result/'
 
 
 class GetTypeError(MyException):
@@ -132,7 +132,7 @@ class ImageProcess:
             cv2.imwrite(ResultImgPath+'getcolor'+str(self.alpha)+'_'+str(self.beta)+'_'+str(self.gama)+'.bmp', baseimg)
         return baseimg
 
-    def showline(self, baseimg, rho, theta):
+    def showline(self, baseimg, rho, theta, savename, fileoutput=False, shouwscreen=False):
         a = np.cos(theta)
         b = np.sin(theta)
         x0 = a * rho
@@ -142,17 +142,21 @@ class ImageProcess:
         x2 = int(x0 - 2000 * (-b))
         y2 = int(y0 - 2000 * a)
         cv2.line(baseimg, (x1, y1), (x2, y2), 255, 2)
-        cv2.imshow('sample', baseimg)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-        return baseimg
+        if shouwscreen:
+            cv2.imshow('showline', baseimg)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+        if fileoutput:
+            cv2.imwrite(savename, baseimg)
 
     def getlines(self, fileoutput=False, showscreen=False):
         self.outpoints = []
         baseimg2 = self.img1.copy()
-        for key in self.colorpoint.keys():
+        linenum = 0
+        fignum = 0
+        for colorkey in self.colorpoint.keys():
             baseimg = cv2.imread(BaseImgPath, 0)
-            for p in self.colorpoint[key]:
+            for p in self.colorpoint[colorkey]:
                 cv2.circle(baseimg, (p[0][0], p[0][1]), 3, 255, -1)
             length = max(20, int((len(self.allpoint)+100)/7))
             lines = cv2.HoughLines(baseimg, 1, np.pi / 180, length)
@@ -160,12 +164,18 @@ class ImageProcess:
                 linea = self.findlines(lines)
                 for line in linea:
                     rho, theta = line[0]
-                    if showscreen:
-                        self.showline(baseimg, rho, theta)
+                    linenum += 1
+                    showlinename = ''
+                    if fileoutput:
+                        figname = 'showline' + str(linenum) + ':' \
+                                  + str(self.alpha) + '_' + str(self.beta) + '_' + str(self.gama)
+                        showlinename = ResultImgPath + figname + '.bmp'
+                        print('writing showline fig' + ':' + str(linenum))
+                    self.showline(baseimg, rho, theta, showlinename, fileoutput, showscreen)
                     pointcolor = []
                     for p in self.allpoint:
                         if self.getdist(p, theta, rho) < 25:
-                            p.append(key)
+                            p.append(colorkey)
                             pointcolor.append(p)
                             cv2.circle(baseimg2, (p[0], p[1]), 3, 255, -1)
                     if showscreen:
@@ -173,8 +183,10 @@ class ImageProcess:
                         cv2.waitKey(0)
                         cv2.destroyAllWindows()
                     if fileoutput:
-                        print('writing houghlines fig')
-                        cv2.imwrite(ResultImgPath + 'houghlines' + str(self.alpha) + '_' + str(self.beta) + '_' + str(
+                        print('writing houghlines circle fig:' + ':' + str(fignum))
+                        fignum += 1
+                        cv2.imwrite(ResultImgPath + 'houghlinecircle' + str(fignum) + ':'
+                                    + str(self.alpha) + '_' + str(self.beta) + '_' + str(
                             self.gama) + '.bmp', baseimg2)
                     pointcolor.sort(key=lambda x: x[0], reverse=True)
                     self.outpoints.append(pointcolor)
@@ -223,8 +235,12 @@ class ImageProcess:
                     cv2.circle(baseimg, (line[index][0], line[index][1]), 5, 255, -1)
             lines = cv2.HoughLines(baseimg, 1, np.pi / 180, 25)
             rho, theta = lines[0][0]
-            if showscreen:
-                self.showline(self.img1, rho, theta)
+            showrowname = ''
+            if fileoutput:
+                figname = 'showrow' + str(self.alpha) + '_' + str(self.beta) + '_' + str(self.gama)
+                showrowname = ResultImgPath + figname + '.bmp'
+                print('writing showrow fig')
+            self.showline(self.img1, rho, theta, showrowname, fileoutput, showscreen)
             pindex = []
             for i, lines in enumerate(self.outpoints):
                 ptm = []
@@ -402,5 +418,7 @@ class ImageProcess:
 
 
 if __name__ == '__main__':
+    OriginalImgPath = '../../figures/examples/'
+    ResultImgPath = '../../figures/examples/result/'
     Data = ImageProcess('image_253_3_53.bmp', True, False)
     print(Data.outpoints)
