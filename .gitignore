@@ -107,4 +107,4 @@ venv.bak/
 /code/ImageProcessing/.idea
 
 # figures
-/figures/*.bmp
+/figures/figures/*.bmp
