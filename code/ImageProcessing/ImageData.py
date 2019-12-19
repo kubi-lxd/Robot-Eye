@@ -8,6 +8,7 @@ import os
 from scipy import *
 from ImageProcess import ImageProcess
 from Exception import MyException
+import ReadMark
 OriginalImgPath = '../../figures/figures/'
 BadImgPath = '../../figures/figures/bad files/'
 # img = cv2.copyMakeBorder(img, 200, 200, 200, 200, cv2.BORDER_CONSTANT, 0)
@@ -53,8 +54,8 @@ class ImageDataProcess(object):
         for point in arrayresult:
             realworldpos = [point[0], point[1]]
             pixelworldpos = [point[2], point[3]]
-            src_point.append(pixelworldpos)
-            dst_point.append(realworldpos)
+            src_point.append(realworldpos)
+            dst_point.append(pixelworldpos)
         if len(src_point) <= 3 or len(src_point) != len(dst_point):
             raise HError
         print('src:')
@@ -141,43 +142,59 @@ class ImageDataProcess(object):
 
     @classmethod
     def circlefigure(cls, imgname, modelclass):
-        head, alpha, beta, gamaend = imgname.split('_')
-        gama, end = gamaend.split('.')
-        # 转整数
-        alpha = int(alpha)
-        beta = int(beta)
-        gama = int(gama)
+        alpha, beta, gama = ReadMark.readname(imgname)
+        img = cv2.imread('../../figures/examples/' + imgname)
         # 3m circle
-        r=3000
-        x0=0
-        y0=0
-        angle = [x*1 for x in range(0,181)]
-        CirclePointList = []
-        for a in angle:
-            x1 = x0 + r * cos(a * pi / 180)
-            y1 = y0 + r * sin(a * pi / 180)
-            CirclePointList.append([x1, y1, alpha, beta, gama])
-        FigPointList = modelclass.Predict(float64(CirclePointList))
-        RealFigPoints = []
-        for FigPoint in FigPointList:
-            FigPoint[0] = round(FigPoint[0])
-            FigPoint[1] = round(FigPoint[1])
-            if FigPoint[0] <= 0 or FigPoint[0] >= 1920:
-                continue
-            if FigPoint[1] <= 0 or FigPoint[0] >= 1080:
-                continue
-            RealFigPoints.append([FigPoint[0], FigPoint[1]])
-
+        radius = [x*500 for x in range(1,9)]
+        color_list = [(0, 210, 255),(45, 210, 210),(80, 175, 175),(115, 140, 140),
+                      (150, 105, 105),(185, 70, 70),(220, 35, 35),(255, 0, 0)]
+        for r in radius:
+            # r = 2000
+            x0 = 0
+            y0 = 0
+            angle = [x*0.1 for x in range(0, 3601)]
+            CirclePointList = []
+            for a in angle:
+                x1 = x0 + r * cos(a * pi / 180)
+                y1 = y0 + r * sin(a * pi / 180)
+                CirclePointList.append([x1, y1, alpha, beta, gama])
+            H = cls.calculateRealToImgHmatrix(imgname)
+            FigPointList = []
+            for point in CirclePointList:
+                o = np.mat([[float32(point[0])], [float32(point[1])], [float32(1)]])
+                res = H * o
+                res = np.asarray(res)
+                res = res / res[2]
+                res = res.astype(np.int32)
+                coordinate = [res[0], res[1]]
+                FigPointList.append(coordinate)
+            # FigPointList = modelclass.Predict(float64(CirclePointList))
+            RealFigPoints = []
+            for FigPoint in FigPointList:
+                print(FigPoint)
+                # TODO: check here
+                FigPoint[0] = round(float(FigPoint[0]))
+                FigPoint[1] = round(float(FigPoint[1]))
+                '''
+                if FigPoint[0] <= 0 or FigPoint[0] >= 1920:
+                    continue
+                if FigPoint[1] <= 0 or FigPoint[0] >= 1080:
+                    continue'''
+                RealFigPoints.append([FigPoint[0], FigPoint[1]])
+            for p in RealFigPoints:
+                k = int(r/500)-1
+                cv2.circle(img, (p[0], p[1]), 1, color_list[k], 2)
         # 画近似曲线
-        img = cv2.imread(imgname)
-        for p in RealFigPoints:
-            cv2.circle(img, (p[0], p[1]), 15, (0, 0, 255), 2)
-
+        #img = cv2.imread('../../figures/examples/'+imgname)
+        #for p in RealFigPoints:
+        #    cv2.circle(img, (p[0], p[1]), 1, (255, 255, 0), 1)
+        cv2.imwrite('../../figures/figures/result/'+'finalresult'+str(alpha)+'_'+str(beta)+'_'+str(gama)+'.bmp', img)
         '''
         cv2.imshow('curve',img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
         '''
+
         return img
 
 
@@ -191,9 +208,9 @@ if __name__ == '__main__':
     print('Hmatrix:')
     print(H)
     point = Data[4]
-    o = np.mat([[point[2]], [point[3]], [1]])
+    o = np.mat([[point[0]], [point[1]], [1]])
     print('real coordinate:')
-    print([point[0], point[1]])
+    print([point[2], point[3]])
     res = H * o
     res = np.asarray(res)
     res = res / res[2]
@@ -202,4 +219,4 @@ if __name__ == '__main__':
     print(res)
     ImageDataProcess.solveallfigures(OriginalImgPath)
     ImageDataProcess.finderrorfiles(OriginalImgPath, BadImgPath)
-    # circlefigure()
+    ImageDataProcess.circlefigure('image_253_3_53.bmp', None)
