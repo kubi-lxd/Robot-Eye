@@ -12,6 +12,7 @@ OriginalImgPath = '../../figures/figures/'
 BadImgPath = '../../figures/figures/bad files/'
 # img = cv2.copyMakeBorder(img, 200, 200, 200, 200, cv2.BORDER_CONSTANT, 0)
 
+
 class HError(MyException):
     def __init__(self):
         super(HError, self).__init__(code=1003, message='not enough points to calculate H matrix', args=('HError,',))
@@ -45,15 +46,15 @@ class ImageDataProcess(object):
         return arrayresult
 
     @classmethod
-    def calculateHmatrix(cls, imgname):
+    def calculateRealToImgHmatrix(cls, imgname):
         arrayresult = cls.imgtoarray(imgname)
         src_point = []
         dst_point = []
         for point in arrayresult:
             realworldpos = [point[0], point[1]]
             pixelworldpos = [point[2], point[3]]
-            src_point.append(realworldpos)
-            dst_point.append(pixelworldpos)
+            src_point.append(pixelworldpos)
+            dst_point.append(realworldpos)
         if len(src_point) <= 3 or len(src_point) != len(dst_point):
             raise HError
         print('src:')
@@ -139,7 +140,7 @@ class ImageDataProcess(object):
         print('find' + str(fignum) + 'files')
 
     @classmethod
-    def Circlefigure(cls, imgname, modelclass):
+    def circlefigure(cls, imgname, modelclass):
         head, alpha, beta, gamaend = imgname.split('_')
         gama, end = gamaend.split('.')
         # 转整数
@@ -186,19 +187,19 @@ if __name__ == '__main__':
     Data = ImageDataProcess.imgtoarray('image_253_3_53.bmp')
     print('ImgArray:')
     print(Data)
-    H = ImageDataProcess.calculateHmatrix('image_253_3_53.bmp')
+    H = ImageDataProcess.calculateRealToImgHmatrix('image_253_3_53.bmp')
     print('Hmatrix:')
     print(H)
     point = Data[4]
-    o = np.mat([[point[0]], [point[1]], [1]])
+    o = np.mat([[point[2]], [point[3]], [1]])
     print('real coordinate:')
-    print([point[2], point[3]])
+    print([point[0], point[1]])
     res = H * o
     res = np.asarray(res)
     res = res / res[2]
     res = res.astype(np.int32)
-    print('Hpredict:')
+    print('Hpredict coordinate:')
     print(res)
     ImageDataProcess.solveallfigures(OriginalImgPath)
     ImageDataProcess.finderrorfiles(OriginalImgPath, BadImgPath)
-    # Circlefigure()
+    # circlefigure()
