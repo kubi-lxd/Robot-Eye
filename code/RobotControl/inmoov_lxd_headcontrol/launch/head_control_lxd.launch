@@ -1,0 +1,6 @@
+<launch>
+  <node name="picamera_capture_node" pkg="inmoov_lxd_headcontrol" type="pi_camera_capture.py" output="screen">
+  </node>
+  <node name="piserial_sender" pkg="inmoov_lxd_headcontrol" type="pi_serial_send.py" output="screen">
+  </node>
+</launch>
